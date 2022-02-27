@@ -1,0 +1,1 @@
+Brak spostrzeżeń co do zadania. FFT czasowo jest znacznie szybszy od DFT.

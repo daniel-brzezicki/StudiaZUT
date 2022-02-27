@@ -1,0 +1,4 @@
+Niewielka różnica sygnału przy wzroście amplitudy.
+Niewielka różnica sygnału przy wzroście częstotliwości.
+Znacząca różnica sygnału wraz ze wzrostem fazy.
+Przy modulacji czestotliwościowej nastepuje zmiana pasma szerokości (powiększenie)

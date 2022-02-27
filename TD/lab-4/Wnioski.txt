@@ -1,0 +1,5 @@
+Kluczowanie z przesuwem amplitudy - szerokości bez znaczącej różnicy
+Kluczowanie z przesuwem fazy - szerokości z drobnymi zmianami
+Kluczowanie z przesuwem czestotliwosci - szerokości z dużymi zmianami
+
+Szerokości pasma zwiększają się wraz z modulowaną częstotliwością.

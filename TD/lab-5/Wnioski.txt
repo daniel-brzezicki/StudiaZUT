@@ -1,0 +1,2 @@
+ASK - przy wartościach po całkowych wykres dodatni, w PSK natomiast ujemny. ASK oraz PSK cechuje prostota i niski czas działania.
+FSK - bardzo czasochłonna, do demodulacji niezbędne są 2 podsygnały z której wylicza się 1 końcowy sygnał.
