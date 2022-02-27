@@ -1,0 +1,14 @@
+I:\SI\SIConnect4\SIConnect4\bin\Debug\SIConnect4.exe.config
+I:\SI\SIConnect4\SIConnect4\bin\Debug\SIConnect4.exe
+I:\SI\SIConnect4\SIConnect4\bin\Debug\SIConnect4.pdb
+I:\SI\SIConnect4\SIConnect4\obj\Debug\SIConnect4.csproj.CoreCompileInputs.cache
+I:\SI\SIConnect4\SIConnect4\obj\Debug\SIConnect4.exe
+I:\SI\SIConnect4\SIConnect4\obj\Debug\SIConnect4.pdb
+I:\SI\SIConnect4\SIConnect4\obj\Debug\SIConnect4.csprojAssemblyReference.cache
+I:\SI\SIConnect4 — kopia\SIConnect4\bin\Debug\SIConnect4.exe.config
+I:\SI\SIConnect4 — kopia\SIConnect4\bin\Debug\SIConnect4.exe
+I:\SI\SIConnect4 — kopia\SIConnect4\bin\Debug\SIConnect4.pdb
+I:\SI\SIConnect4 — kopia\SIConnect4\obj\Debug\SIConnect4.csprojAssemblyReference.cache
+I:\SI\SIConnect4 — kopia\SIConnect4\obj\Debug\SIConnect4.csproj.CoreCompileInputs.cache
+I:\SI\SIConnect4 — kopia\SIConnect4\obj\Debug\SIConnect4.exe
+I:\SI\SIConnect4 — kopia\SIConnect4\obj\Debug\SIConnect4.pdb

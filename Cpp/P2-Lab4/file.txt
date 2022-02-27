@@ -1,0 +1,5 @@
+Marcin;Gortat;211;glowki;strzelanie;szybkosc;podawanie;rzuty
+Jan;Blachowicz;188;glowki;strzelanie;szybkosc;podawanie;rzuty
+Adam;Malysz;170;glowki;strzelanie;szybkosc;podawanie;rzuty
+Robert;Kubica;185;glowki;strzelanie;szybkosc;podawanie;rzuty
+Wojciech;Szczesny;195;glowki;strzelanie;szybkosc;podawanie;rzuty
