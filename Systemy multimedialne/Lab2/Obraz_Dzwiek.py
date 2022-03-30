@@ -9,7 +9,7 @@ import soundfile as sf
 
 #ZADANIE 1 - DOGRAC W DOMU Z KAMERY
 def zad1():
-    cap = cv2.VideoCapture("D:/Pliki/repos/SystemyMultimedialne/Lab2/clip_1.mp4") #przechwytywanie z pliku
+    cap = cv2.VideoCapture(0)#cv2.VideoCapture("D:/Pliki/repos/SystemyMultimedialne/Lab2/clip_1.mp4") #przechwytywanie z pliku
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 
@@ -18,7 +18,7 @@ def zad1():
     dim=(width,height)
 
     out = cv2.VideoWriter('changed_clip.mp4', fourcc, 20.0, dim)
-    original =cv2.VideoWriter('original_clip.mp4', fourcc, 20.0, (1280,  720))
+    original =cv2.VideoWriter('original_clip.mp4', fourcc, 20.0, (640,480))
 
     if not cap.isOpened():
         print("Cannot open camera")
@@ -28,7 +28,7 @@ def zad1():
         if not ret:
             print("Can't receive frame (stream end?). Exiting ...")
             break
-
+        
         flipped = cv2.flip(frame, 1)
 
         cv2.imshow('frame', flipped)
