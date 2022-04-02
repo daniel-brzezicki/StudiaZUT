@@ -12,6 +12,8 @@
 #include <stdbool.h>
 
 
+#define BILLION  1000000000.;
+
 int main(int argc, char **argv){
   int times=1;
 
@@ -27,13 +29,13 @@ int main(int argc, char **argv){
 			case 't':
 				customTimes=true;
         times=atoi(optarg);
-        printf("%d",times);
+        //printf("%d",times);
 
 				break;
 		}
 	}
 
-  char command[] = " ";
+  char command[1000] = "";
 
   int commandPlace = 0;
   if(show && customTimes)
@@ -51,14 +53,13 @@ int main(int argc, char **argv){
     strcat(command," ");
 }
 
-if(command==" "){
+if(command[0] == '\0'){
   return 0;
 }
   char rest[] = " > /dev/null 2>&1";
   if(!show)
     strcat(command, rest);
 
-  //printf("%s\n\n",command);
 
   int i;
   pid_t pPid = getpid();
@@ -79,21 +80,28 @@ if(command==" "){
         exit(0);
       }
       else{
-        clock_t start = clock();
+        struct timespec start, stop;
+        double t;
+
+        clock_gettime(CLOCK_REALTIME, &start);
+
         wait4(cPid,&status,0,&_rusage);
-        clock_t end = clock();
+
+        clock_gettime(CLOCK_REALTIME, &stop);
+
+        t= (stop.tv_sec - start.tv_sec)
+              + (stop.tv_nsec - start.tv_nsec)
+                / BILLION;
 
         printf("---------- wykonanie: %d\n", i+1);
 
-        double t = ((double) (end-start)) /CLOCKS_PER_SEC;
-        printf("realTime: %f s.\n",t);
+        printf("realTime: %.6f s.\n",t);
         sumTime+=t;
 
         long int sec=_rusage.ru_utime.tv_sec;
         long int secMs=_rusage.ru_utime.tv_usec;
         double userTime = sec + (secMs/1000000.0);
-        //printf("%f\n",userTime);
-        printf("userTime: %ld.%06ld s.\n", sec, secMs);
+        printf("userTime: %.6f s.\n", userTime);
         sumUserTime+=userTime;
 
 
@@ -101,7 +109,7 @@ if(command==" "){
         secMs = _rusage.ru_stime.tv_usec;
         double sysTime = sec + (secMs/1000000.0);
         //printf("%f\n",sysTime);
-        printf("sysTime: %ld.%06ld s. \n", _rusage.ru_stime.tv_sec, _rusage.ru_stime.tv_usec);
+        printf("sysTime: %.6f s. \n", sysTime);
         //printf("process %ld\n", (long)cPid);
         sumSysTime+=sysTime;
 
