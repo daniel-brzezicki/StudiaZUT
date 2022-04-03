@@ -101,12 +101,27 @@ def zad2():
     buffer= np.zeros(((N+1)*FS,2))
     Frame_buffer = np.zeros(((N+1)*FS,2))
     frame_idx=0
-    delay=0*FS
+    delay=1
+
+    silent_buffer=np.zeros((int((delay+1)*FS),2))
     stream.start_stream()
     while stream.is_active():
         time.sleep(N)
         stream.stop_stream()
     stream.close()
+
+    print(silent_buffer.shape)
+    print(Frame_buffer.shape)
+
+    
+    x=[]
+    x.extend(silent_buffer[:,0].tolist())
+    x.extend(Frame_buffer[:,0].tolist())
+    plt.subplot(2,1,1)
+    plt.plot(x)
+    plt.subplot(2,1,2)
+    plt.plot(Frame_buffer[:,0])
+    plt.show()
 
 
 
@@ -120,8 +135,8 @@ CHUNK = 1024
 
 #1 - sluchawki mikro
 #2 - slucahwy
-#zad2()
-zad1()
+zad2()
+#zad1()
 
 
 
