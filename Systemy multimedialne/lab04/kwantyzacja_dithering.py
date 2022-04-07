@@ -80,9 +80,13 @@ def floydDithering(sourceIm, palette):
             image[x,y] = newpixel
             quant_error = oldpixel - newpixel
             image[x + 1,y    ] = np.clip(image[x + 1,y    ] + quant_error * 7 / 16,0,1)
-            image[x - 1,y + 1] = np.clip(image[x - 1,y + 1] + quant_error * 3 / 16,0,1)
-            image[x    ,y + 1] = np.clip(image[x    ,y + 1] + quant_error * 5 / 16,0,1)
-            image[x + 1,y + 1] = np.clip(image[x + 1,y + 1] + quant_error * 1 / 16,0,1)
+            image[x - 1,y + 1] = np.clip(image[x - 1,y + 1] + quant_error * 7 / 16,0,1)
+            image[x    ,y + 1] = np.clip(image[x    ,y + 1] + quant_error * 7 / 16,0,1)
+            image[x + 1,y + 1] = np.clip(image[x + 1,y + 1] + quant_error * 7 / 16,0,1)
+
+    for x in range(width):
+        for y in range(height):
+            image[x,y]=colorFit(image[x,y],palette)
 
     return image
 
@@ -101,25 +105,25 @@ def TestImage(sourceIm,palette):
         cm="gray"
 
     #original
-    plt.title('Original image')
-    plt.imshow(image,cmap=cm)
-    plt.show()
+    # plt.title('Original image')
+    # plt.imshow(image,cmap=cm)
+    # plt.show()
 
-    plt.title('Quantize')
-    q = quantize(image,palette)
-    plt.imshow(q,cmap=cm)
-    plt.show()
+    # plt.title('Quantize')
+    # q = quantize(image,palette)
+    # plt.imshow(q,cmap=cm)
+    # plt.show()
 
-    if(layer < 3 and len(palette)==2):
-        plt.title('Random Dithering')
-        rd = randomDithering(image)
-        plt.imshow(rd,cmap=cm)
-        plt.show()
+    # if(layer < 3 and len(palette)==2):
+    #     plt.title('Random Dithering')
+    #     rd = randomDithering(image)
+    #     plt.imshow(rd,cmap=cm)
+    #     plt.show()
 
-    plt.title('Organized Dithering')
-    od = organizedDithering(image,palette)
-    plt.imshow(od,cmap=cm)
-    plt.show()
+    # plt.title('Organized Dithering')
+    # od = organizedDithering(image,palette)
+    # plt.imshow(od,cmap=cm)
+    # plt.show()
 
     plt.title('Floyd-Steinberg Dithering')
     fd = floydDithering(image,palette)
@@ -170,10 +174,9 @@ images = [
     '0016.jpg'
 ]
 
-#greyImages = [images[6], images[7]]
-greyImages=[images[6]]
-#for greyImage in greyImages:
-#    TestImage(plt.imread(greyImage),grey1Bit)
+# greyImages = [images[6], images[7]]
+# for greyImage in greyImages:
+#    TestImage(plt.imread(greyImage),grey4Bit)
 
 # for greyImage in greyImages:
 #     TestImage(plt.imread(greyImage),grey2Bit)
@@ -182,23 +185,23 @@ greyImages=[images[6]]
 #     TestImage(plt.imread(greyImage),grey4Bit)
 
 
-# rgbImages = [images[4],images[13]]
-# for rgbImage in rgbImages:
-#     TestImage(plt.imread(rgbImage),RGB8Bit)
+rgbImages = [images[4],images[13]]
+for rgbImage in rgbImages:
+    TestImage(plt.imread(rgbImage),RGB16Bit)
 
-own = np.array([
-    [137,139,142],#zol
-    [58,64,70], #z
-    [196,191,178],
-    [89,94,102],
-    [180,188,185],
-    [172,172,174],
-    [205,196,182],
-    [33,35,36]
-    ])
+# own = np.array([
+#     [137,139,142],#zol
+#     [58,64,70], #z
+#     [196,191,178],
+#     [89,94,102],
+#     [180,188,185],
+#     [172,172,174],
+#     [205,196,182],
+#     [33,35,36]
+#     ])
 
 
-TestImage(plt.imread(images[11]),RGB8Bit)
+# TestImage(plt.imread(images[11]),RGB8Bit)
 
 
 # im = quantize(img3,RGB_PALETTE)
