@@ -67,22 +67,32 @@ def organizedDithering(sourceIm, palette):
 
     return image
 
+def fdHelper(x,y, width,height):
+    if(x in range(width) and y in range(height)):
+        return True
+    return False
+
 def floydDithering(sourceIm, palette):
     sourceIm = checkImage(sourceIm)
 
     image= sourceIm.copy()
     width, height = image.shape[:2]
 
-    for x in range(width-1):
-        for y in range(height-1):
+    for x in range(width):
+        for y in range(height):
             oldpixel = image[x,y].copy()
             newpixel = colorFit(oldpixel, palette)
             image[x,y] = newpixel
             quant_error = oldpixel - newpixel
-            image[x + 1,y    ] = np.clip(image[x + 1,y    ] + quant_error * 7 / 16,0,1)
-            image[x - 1,y + 1] = np.clip(image[x - 1,y + 1] + quant_error * 7 / 16,0,1)
-            image[x    ,y + 1] = np.clip(image[x    ,y + 1] + quant_error * 7 / 16,0,1)
-            image[x + 1,y + 1] = np.clip(image[x + 1,y + 1] + quant_error * 7 / 16,0,1)
+
+            if(fdHelper(x+1,y,width,height)):
+                image[x + 1,y    ] = image[x + 1,y    ] +quant_error * 7 / 16
+            if(fdHelper(x-1,y+1,width,height)):
+                image[x - 1,y + 1] = image[x - 1,y + 1] + quant_error * 7 / 16
+            if(fdHelper(x,y+1,width,height)):
+                image[x    ,y + 1] = image[x    ,y + 1] + quant_error * 7 / 16
+            if(fdHelper(x+1,y+1,width,height)):
+                image[x + 1,y + 1] = image[x + 1,y + 1] + quant_error * 7 / 16
 
     for x in range(width):
         for y in range(height):
@@ -187,7 +197,7 @@ images = [
 
 rgbImages = [images[4],images[13]]
 for rgbImage in rgbImages:
-    TestImage(plt.imread(rgbImage),RGB16Bit)
+    TestImage(plt.imread(rgbImage),RGB8Bit)
 
 # own = np.array([
 #     [137,139,142],#zol
