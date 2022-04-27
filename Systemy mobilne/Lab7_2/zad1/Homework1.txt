@@ -1,0 +1,4 @@
+1. ViewModel
+2. True
+3. When the associated UI controller is finished (if it's an activity) or detached (if it's a fragment).
+4. Instantiating a ViewModel object.
