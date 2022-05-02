@@ -128,3 +128,40 @@ freqs = [2000,4000,8000,16000,24000,41000,16950]
 #print(dec.shape)
 
 #interpolate(sound,48000,16000,'linear')
+
+# SIN60Hz
+#
+#  Kwantyzacja dla 4 bitów dźwięk ma inne brzmienie niż oryginał, przy 8 bitach pojawia się szum, 
+#   natomiast przy 16 jak i 24 bitach nie słychać żadnej różnicy między oryginałem
+#  Decymacja dla częstotliwości 2000,4000, 8000, 16000, 24000 brzmią tak jak oryginał, zmiany brzmieniowe pojawiają się zaś
+#   przy 16950 oraz 41000
+#  Przy interpolacji liniowej oraz kwadratowej dźwięki brzmią tak samo jak oryginał
+
+
+# SIN440Hz
+#
+#  Kwantyzacja podobnie jak przykład wyżej, dla 4 bitów, dźwięk znacznie się różni od oryginału. Przy 8, 16 oraz 24
+#   nie występuje żadna znacząca różnica między oryginałem.
+#  Decymacja identycznie jak przykład wyżej. 2000, 4000, 8000, 16000, 24000 brzmią jak oryginał, zaś 16950, 41000 
+#   słyszalne są zmiany
+#  Przy interpolacji liniowej oraz kwadratowej dźwięki brzmią tak samo jak oryginał
+
+
+# singMedium1
+#
+#  Kwantyzacja dla 4 bitów dźwięk zniekształcony, dla 8 bitów występuje szum, natomiast dla 16 jak i 24 dźwięk jest
+#   praktycznie taki sam jak ogryginalny.
+#  Decymacja 2000, 4000, 8000, 16000, 16950, 41000 dźwięki zbliżone do oryginału. Przy 24000Hz dźwięki są niższe niż 
+#   w oryginale.
+#  Przy interpolacji liniowej jak i kwadratowej dźwięki różnią się jedynie przy 24000Hz.
+
+
+# singLow1
+# 
+#  Kwantyzacja tak samo jak w singMedium1
+#  Decymacja przy 2000, 4000, 8000, 16000 oraz 24000Hz słyszalna jest różnica między oryginałem, wyższe czestotliowści
+#   bez różnicy
+#  Interpolacja liniowa, jak i kwadratowa dla częstotliwości poniżej 24000Hz z słyszalnymi różnicami, wartości 
+#   powyżej, bez znaczących różnic
+
+
