@@ -1,74 +1,121 @@
-import scipy.fftpack
 import numpy as np
-import cv2
 import matplotlib.pyplot as plt
+import soundfile as sf
+import sounddevice as sd
+import os
 
 
-def convertToYCrCb(image):
-    return cv2.cvtColor(image,cv2.COLOR_RGB2YCrCb).astype(int)
+def quantize(sourceSd, bits): 
+    m=0
+    n=0
+    typ = sourceSd.dtype
+    d = 2**bits-1
+    
+    sound = sourceSd.astype(np.float32)
 
-def convertToRGB(image):
-    return cv2.cvtColor(image.astype(np.uint8),cv2.COLOR_YCrCb2RGB)
+    if np.issubdtype(typ, np.floating):
+        m=-1
+        n=1
+    else:
+        m=np.iinfo(typ).min
+        n=np.iinfo(typ).max
+    
+    sound = (sound -m) / (n-m)
+    sound = np.round(sound*d)/d
+    sound = ((sound*(n-m))+m).astype(typ)
 
-def dct2(a):
-    return scipy.fftpack.dct(scipy.fftpack.dct( a.astype(float), axis=0, norm='ortho' ), axis=1, norm='ortho' )
+    return sound
 
-def idct2(a):
-    return scipy.fftpack.idct(scipy.fftpack.idct( a.astype(float), axis=0 , norm='ortho'), axis=1 , norm='ortho')
+A=87.6
 
+def AlawEncode(x,bits):
+    result=x.copy()
+    idx1 = np.abs(x) < (1/A)
+    idx2 =  np.abs(x) >= (1/A) #np.logical_not(idx1)
 
+    result[idx1]=np.sign(x[idx1])*((A*np.abs(x[idx1]))/(1+np.log(A)))
+    result[idx2]=np.sign(x[idx2])*((1+np.log(A*np.abs(x[idx2])))/(1+np.log(A)))
 
-class Data:
-    YCrCb=[]
-    #shape = (0,0,0)
-    pass
-
-def compress(image):
-    data = Data()
-    data.YCrCb=convertToYCrCb(image)
-    return data
-
-def decompress(data):
-    image = convertToRGB(data.YCrCb)
-    return image
-
-
-image = cv2.imread('zyrafa.jpg')
-plt.imshow(image)
-plt.title('Original')
-plt.show()
-
-
-compressed= compress(image)
-decompressed = decompress(compressed)
-plt.imshow(decompressed)
-plt.title('Decompressed')
-plt.show()
+    for i in range(len(result)):
+        result[i]=quantize(result[i],bits)
+    return result
 
 
-#YCrCb=cv2.cvtColor(RGB,cv2.COLOR_RGB2YCrCb).astype(int)
-#RGB=cv2.cvtColor(YCrCb.astype(np.uint8),cv2.COLOR_YCrCb2RGB)
-# def zigzag(A):
-#     template= n= np.array([
-#             [0,  1,  5,  6,  14, 15, 27, 28],
-#             [2,  4,  7,  13, 16, 26, 29, 42],
-#             [3,  8,  12, 17, 25, 30, 41, 43],
-#             [9,  11, 18, 24, 31, 40, 44, 53],
-#             [10, 19, 23, 32, 39, 45, 52, 54],
-#             [20, 22, 33, 38, 46, 51, 55, 60],
-#             [21, 34, 37, 47, 50, 56, 59, 61],
-#             [35, 36, 48, 49, 57, 58, 62, 63],
-#             ])
-#     if len(A.shape)==1:
-#         B=np.zeros((8,8))
-#         for r in range(0,8):
-#             for c in range(0,8):
-#                 B[r,c]=A[template[r,c]]
-#     else:
-#         B=np.zeros((64,))
-#         for r in range(0,8):
-#             for c in range(0,8):
-#                 B[template[r,c]]=A[r,c]
-#     return B
+def AlawDecode(y):
+    result=y.copy()#np.zeros(y.shape)
+    idy1= np.abs(y) < (1/(1+np.log(A)))
+    idy2=np.abs(y) >= (1/(1+np.log(A)))#np.logical_not(idy1)
 
-# print(zigzag())
+    result[idy1]=np.sign(y[idy1]) * ((np.abs(y[idy1]) * (1+np.log(A))))/A
+    result[idy2]=np.sign(y[idy2]) * ((np.exp(np.abs(y[idy2])*(1+np.log(A)))-1))/A
+
+    #result=quantize(result,bits)
+    return result
+
+def DPCMencode(source, bits):
+    e=source[0]
+    result=source.copy()
+    for i in range(1,len(source)):
+        y=quantize(result[i]-e,bits)
+        e+=y
+        result[i]=y
+
+    return result
+
+def DPCMdecode(source):
+    result=source.copy()
+    for i in range(1,len(source)):
+        result[i]=result[i-1]+result[i]
+    return result
+    
+def plot(sourceSd, dpcm,alaw, file):
+    x=np.linspace(-1,1,1000)
+
+    plt.figure()
+    plt.subplot(3,1,1)
+    plt.title(file+ ' Original')
+
+    plt.plot(x,sourceSd[0:1000])
+
+    plt.subplot(3,1,2)
+    plt.title(file+ ' Alaw decoding')
+    plt.plot(x,alaw[0:1000])
+
+    plt.subplot(3,1,3)
+    plt.title(file+ ' DPCM decoding')
+    plt.plot(x,dpcm[0:1000])
+    #spectrum(sourceSd,Fs)\
+    
+    dest='C:/Users/HP/Documents/GitHub/StudiaZUT/Systemy multimedialne/Lab7/'
+    plt.savefig(dest+file+'.png')
+    plt.show()
+
+sounds = os.listdir("C:/Users/HP/Documents/GitHub/StudiaZUT/Systemy multimedialne/Lab7/")[1:]
+
+
+
+#sound, freq = sf.read(sounds[0], dtype=np.int32)
+
+
+#Testy
+#x=np.linspace(-1,1,1000)
+#sound=0.9*np.sin(np.pi*x*4)
+bits=[8,6,4,2]
+
+for file in sounds:
+    sound, freq=sf.read(file, dtype=np.float32)
+    #x=np.linspace(-1,1,1000)
+    #sound=0.9*np.sin(np.pi*x*4)
+    
+    for bit in bits:
+        alawEncode = AlawEncode(sound,bit)
+        #quant=quantize(alawEncode,bit)
+        #for i in range(len(alawEncode)):
+            #alawEncode[i] = quantize(alawEncode[i],bit)
+        alawDecode=AlawDecode(alawEncode)
+        dpcmEncode = DPCMencode(sound,bit)
+        dpcmDecode = DPCMdecode(dpcmEncode)
+        #sd.play(alawDecode, samplerate=freq, blocking=True)
+        plot(sound,dpcmDecode,alawDecode, file+str(bit))
+
+print('done')
