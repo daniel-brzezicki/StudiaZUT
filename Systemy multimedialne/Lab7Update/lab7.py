@@ -42,7 +42,7 @@ def AlawEncode(x,bits):
 
 
 def AlawDecode(y):
-    result=y.copy()#np.zeros(y.shape)
+    result=y.copy()
     idy1= np.abs(y) < (1/(1+np.log(A)))
     idy2=np.abs(y) >= (1/(1+np.log(A)))
 
