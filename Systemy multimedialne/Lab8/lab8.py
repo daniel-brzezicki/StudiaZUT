@@ -18,32 +18,97 @@ def idct2(a):
 
 
 
-class Data:
-    YCrCb=[]
-    #shape = (0,0,0)
-    pass
+def chromaSubsample(data, params):
+    J, a, b = list(map(int, params.split(':')))
+    y,x = data.shape
+    if J==a and a == b:
+        return data
 
-def compress(image):
-    data = Data()
-    data.YCrCb=convertToYCrCb(image)
-    return data
+    result=np.empty((y, int(x/2)))
+    if params=="4:2:2":
+        for _y in range(0,y):
+            for _x in range(0,x,2):
+                result[_y][int(_x/2)]=data[_y][_x]
+    
+    return result
 
-def decompress(data):
-    image = convertToRGB(data.YCrCb)
-    return image
+def chromaDesubsample(data, params):
+    J, a, b = list(map(int, params.split(':')))
+    y,x = data.shape
+    if J==a and a == b:
+        return data
+
+    result=np.empty((y, x*2))
+    if params=="4:2:2":
+        for _y in range(0,y):
+            for _x in range(0,x,2):
+                result[_y][_x*2]=data[_y][_x]
+                result[_y][_x*2+1]=data[_y][_x]
+
+    return result    
+
+def compress(SourceIm,params, tab):
+    #data.YCrCb=convertToYCrCb(image)
+    sampled=chromaSubsample(SourceIm,params)
+    sampled = sampled.astype(int)-128
+
+    dct = scipy.fftpack.dct( scipy.fftpack.dct(sampled.astype(float), axis=0, norm='ortho' ), axis=1, norm='ortho' )
+    y,x = sampled.shape
+    result=np.zeros(y*x)
+    idx=0
+    for _y in range(0,y,8):
+        for _x in range(0,x,8):
+            toZig=dct[_y:_y+8,_x:_x+8]
+            tmp=zigzag(toZig)
+            result[idx:idx+64]=np.round(tmp/tab.flatten()).astype(int)
+            idx+=64
+    return result
 
 
-image = cv2.imread('zyrafa.jpg')
-plt.imshow(image)
-plt.title('Original')
-plt.show()
+   
+
+def decompress(data,params,tab):
+    y,x=data.shape
+    if params == "4:4:4":
+        result=np.zeros(
+            int(np.sqrt(y)),
+            int(np.sqrt(y))
+        )
+    else:
+        result=np.zeros(
+            int(np.sqrt(y*2)),
+            int(np.sqrt(y*2)/2)
+        )
+
+    for idx, i in enumerate(range(0,y,64)):
+        dequantized=data[i:i+64]*tab.flatten()
+        unzig=zigzag(dequantized)
+
+        _x=(idx*8)%x
+        _y=int((idx*8)/x)*8
+        result[_y:-y+8, _x:_x+8]=unzig
+
+    udct=scipy.fftpack.idct(scipy.fftpack.idct(result.astype(float), axis=0 , norm='ortho'), axis=1 , norm='ortho')
+    udct=np.clip(udct,0,255).astype(np.uint8)
+    result= chromaDesubsample(udct,params)
+    return result
 
 
-compressed= compress(image)
-decompressed = decompress(compressed)
-plt.imshow(decompressed)
-plt.title('Decompressed')
-plt.show()
+
+x = 10
+y = 15
+img = cv2.imread("zyrafa.jpg")[y:y+128, x:x+12]
+img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+#plt.imshow(img)
+#plt.title('Original')
+# plt.show()
+
+Y, Cr, Cb = np.clip(cv2.split(img), 0, 255)
+compressed= compress(Y,"4:2:2",[0,0])
+#decompressed = decompress(compressed)
+# plt.imshow(compressed)
+# plt.title('Decompressed')
+# plt.show()
 
 
 #YCrCb=cv2.cvtColor(RGB,cv2.COLOR_RGB2YCrCb).astype(int)
