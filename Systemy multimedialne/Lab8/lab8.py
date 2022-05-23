@@ -59,6 +59,11 @@ QC= np.array([
 ones = np.ones((8, 8))
 
 
+class DATA():
+    Y=[]
+    Cr=[]
+    Cb=[]
+
 def chromaSubsample(data, params):
     y,x = data.shape
 
@@ -88,7 +93,17 @@ def chromaDesubsample(data, params):
 
 
 
-def compress(data, params, tab):
+def compress(sourceIm,params,t1,t2,t3):
+    Y, Cr, Cb = np.clip(cv2.split(img), 0, 255)
+
+    data = DATA()
+    data.Y = compressHelper(Y,params,t1)
+    data.Cr = compressHelper(Cr,params,t2)
+    data.Cb= compressHelper(Cb,params,t3)
+
+    return data
+
+def compressHelper(data, params, tab):
     cs=chromaSubsample(data,params)
     cs = cs.astype(int)-128
     cs_y,cs_x = cs.shape
@@ -100,7 +115,8 @@ def compress(data, params, tab):
     idx=0
     for _y in range(0,dct_y,8):
         for _x in range(0,dct_x,8):
-            result[idx:idx+64]=np.round(zigzag(dct[_y:_y+8,_x:_x+8])/tab.flatten())
+            quant=np.round(dct[_y:_y+8,_x:_x+8]//tab).astype(int)
+            result[idx:idx+64]=zigzag(quant)
             idx+=64
     return result
 
@@ -117,28 +133,38 @@ def initData(params,s):
             int(np.sqrt(s*2)/2)
         ))
 
-def decompress(data,params,tab):
+def decompress(data, params,t1,t2,t3):
+
+    Y=decompressHelper(data.Y,params,t1)
+    Cr=decompressHelper(data.Cr,params,t2)
+    Cb=decompressHelper(data.Cb,params,t3)
+
+    return np.dstack([Y,Cr,Cb]).astype(np.uint8)
+
+
+
+def decompressHelper(data,params,tab):
     result = initData(params,data.shape[0])
 
     y,x=result.shape
     for idx, i in enumerate(range(0,data.shape[0],64)):
-        dequantized=data[i:i+64]*tab.flatten()
+        dezigzaged=zigzag(data[i:i+64])
+        dequantized=dezigzaged*tab
         _x=(idx*8)%x
         _y=int((idx*8)/x)*8
-        result[_y:_y+8, _x:_x+8]=zigzag(dequantized)
+        result[_y:_y+8, _x:_x+8]=dequantized
 
     udct=idct2(result)+128
     result= chromaDesubsample(np.clip(udct,0,255).astype(np.uint8),params)
     return result
 
 def createPlots(img,param, t1,t2,t3,name):
-    Y, Cr, Cb = np.clip(cv2.split(img), 0, 255)
-
     figure, sp = plt.subplots(4, 2)
     figure.set_size_inches(7, 13)
     figure.suptitle(name,fontsize=16)
 
     #orig
+    Y, Cr, Cb = np.clip(cv2.split(img), 0, 255)
     sp[0,0].imshow(img)
     sp[1,0].imshow(Y, cmap=plt.cm.gray)
     sp[2,0].imshow(Cr, cmap=plt.cm.gray)
@@ -146,18 +172,12 @@ def createPlots(img,param, t1,t2,t3,name):
 
 
     #do work
-    compressedy= compress(Y,param,t1)
-    decompressedY = decompress(compressedy,param,t1)
-
-    compressedcr= compress(Cr,param,t2)
-    decompressedCr = decompress(compressedcr,param,t2)
-
-    compressedcb =compress(Cb,param,t3)
-    decompressedCb = decompress(compressedcb,param,t3)
-
+    compressedy= compress(img,param,t1,t2,t3)
+    decompressedIm = decompress(compressedy,param,t1,t2,t3)
 
     #decomp
-    sp[0,1].imshow(np.dstack([decompressedY,decompressedCr,decompressedCb]).astype(np.uint8))
+    decompressedY, decompressedCr, decompressedCb = np.clip(cv2.split(decompressedIm), 0, 255)
+    sp[0,1].imshow(decompressedIm)
     sp[1,1].imshow(decompressedY, cmap=plt.cm.gray)
     sp[2,1].imshow(decompressedCr, cmap=plt.cm.gray)
     sp[3,1].imshow(decompressedCb, cmap=plt.cm.gray)
@@ -168,16 +188,17 @@ def createPlots(img,param, t1,t2,t3,name):
 
 
 images=['zyrafa.jpg','dog.jpg','bugsbunny.jpg']
+dims = [(450,300),(300,200),(0,100)]
 
-for image in images:
-    x = 450
-    y = 300
-    img = cv2.imread(image)[y:y+128, x:x+128]
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+for dim in dims:
+    for image in images:
+        x,y = dim
+        img = cv2.imread(image)[y:y+128, x:x+128]
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-    createPlots(img,"4:4:4",ones,ones,ones,image[:3]+" 4-4-4")
-    #plt.show()
-    createPlots(img,"4:2:2",ones,ones,ones,image[:3]+" 4-2-2 100pro")
-    #plt.show()
-    createPlots(img,"4:2:2",QY,QC,QC,image[:3]+" 4-2-2 50pro")
-   # plt.show()
+        createPlots(img,"4:4:4",ones,ones,ones,image[:3]+" "+str(x)+" "+str(y)+" "+" 4-4-4")
+        #plt.show()
+        createPlots(img,"4:2:2",ones,ones,ones,image[:3]+" "+str(x)+" "+str(y)+" "+" 4-2-2 100pro")
+        #plt.show()
+        createPlots(img,"4:2:2",QY,QC,QC,image[:3]+" "+str(x)+" "+str(y)+" "+" 4-2-2 50pro")
+    # plt.show()
