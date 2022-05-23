@@ -181,13 +181,13 @@ def createPlots(img,param, t1,t2,t3,name):
     sp[2,1].imshow(decompressedCr, cmap=plt.cm.gray)
     sp[3,1].imshow(decompressedCb, cmap=plt.cm.gray)
 
-    #dest = "D:/GitHubProjects/StudiaZUT/Systemy multimedialne/Lab8/"
-    #plt.savefig(dest+name+'.png')
-    plt.show()
+    dest = "D:/GitHubProjects/StudiaZUT/Systemy multimedialne/Lab8/"
+    plt.savefig(dest+name+'.png')
+    #plt.show()
 
 
 
-images=['zyrafa.jpg']#,'dog.jpg','bugsbunny.jpg']
+images=['zyrafa.jpg','dog.jpg','bugsbunny.jpg']
 dims = [(450,300),(300,200),(0,100)]
 
 for dim in dims:
