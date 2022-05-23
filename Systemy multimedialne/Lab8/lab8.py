@@ -64,11 +64,11 @@ class DATA():
     Cr=[]
     Cb=[]
 
-def chromaSubsample(data, params):
+def chromaSubsample(data, params, sub=True):
     y,x = data.shape
 
     result=np.empty((y, int(x/2)))
-    if params=="4:2:2":
+    if params=="4:2:2" and sub==True:
         for _y in range(0,y):
             for _x in range(0,x,2):
                 result[_y][int(_x/2)]=data[_y][_x]
@@ -77,11 +77,11 @@ def chromaSubsample(data, params):
 
     return result
 
-def chromaDesubsample(data, params):
+def chromaDesubsample(data, params, sub=True):
     y,x = data.shape
 
     result=np.empty((y, x*2))
-    if params=="4:2:2":
+    if params=="4:2:2" and sub==True:
         for _y in range(0,y):
             for _x in range(0,x):
                 result[_y][_x*2]=data[_y][_x]
@@ -94,35 +94,35 @@ def chromaDesubsample(data, params):
 
 
 def compress(sourceIm,params,t1,t2,t3):
-    Y, Cr, Cb = np.clip(cv2.split(img), 0, 255)
+    Y, Cr, Cb = cv2.split(img)
 
     data = DATA()
-    data.Y = compressHelper(Y,params,t1)
+    data.Y = compressHelper(Y,params,t1,False)
     data.Cr = compressHelper(Cr,params,t2)
     data.Cb= compressHelper(Cb,params,t3)
 
     return data
 
-def compressHelper(data, params, tab):
-    cs=chromaSubsample(data,params)
+def compressHelper(data, params, tab, chroma=True):
+
+    cs=chromaSubsample(data,params,chroma)
     cs = cs.astype(int)-128
     cs_y,cs_x = cs.shape
     result=np.zeros(cs_y*cs_x)
 
-    dct = dct2(cs)
-    dct_y,dct_x = dct.shape
-
     idx=0
-    for _y in range(0,dct_y,8):
-        for _x in range(0,dct_x,8):
-            quant=np.round(dct[_y:_y+8,_x:_x+8]//tab).astype(int)
+    for _y in range(0,cs_y,8):
+        for _x in range(0,cs_x,8):
+            dct = dct2(cs[_y:_y+8,_x:_x+8])
+            #quant=np.round(dct[_y:_y+8,_x:_x+8]//tab).astype(int)
+            quant=np.round(dct//tab).astype(int)
             result[idx:idx+64]=zigzag(quant)
             idx+=64
     return result
 
 
-def initData(params,s):
-    if params == "4:4:4":
+def initData(params,s, chroma):
+    if params == "4:4:4" or not chroma:
         return np.zeros((
             int(np.sqrt(s)),
             int(np.sqrt(s))
@@ -135,7 +135,7 @@ def initData(params,s):
 
 def decompress(data, params,t1,t2,t3):
 
-    Y=decompressHelper(data.Y,params,t1)
+    Y=decompressHelper(data.Y,params,t1,False)
     Cr=decompressHelper(data.Cr,params,t2)
     Cb=decompressHelper(data.Cb,params,t3)
 
@@ -143,8 +143,8 @@ def decompress(data, params,t1,t2,t3):
 
 
 
-def decompressHelper(data,params,tab):
-    result = initData(params,data.shape[0])
+def decompressHelper(data,params,tab,chroma=True):
+    result = initData(params,data.shape[0],chroma)
 
     y,x=result.shape
     for idx, i in enumerate(range(0,data.shape[0],64)):
@@ -152,10 +152,9 @@ def decompressHelper(data,params,tab):
         dequantized=dezigzaged*tab
         _x=(idx*8)%x
         _y=int((idx*8)/x)*8
-        result[_y:_y+8, _x:_x+8]=dequantized
+        result[_y:_y+8, _x:_x+8]=idct2(dequantized)+128
 
-    udct=idct2(result)+128
-    result= chromaDesubsample(np.clip(udct,0,255).astype(np.uint8),params)
+    result= chromaDesubsample(np.clip(result,0,255).astype(np.uint8),params,chroma)
     return result
 
 def createPlots(img,param, t1,t2,t3,name):
@@ -182,12 +181,13 @@ def createPlots(img,param, t1,t2,t3,name):
     sp[2,1].imshow(decompressedCr, cmap=plt.cm.gray)
     sp[3,1].imshow(decompressedCb, cmap=plt.cm.gray)
 
-    dest = "D:/GitHubProjects/StudiaZUT/Systemy multimedialne/Lab8/"
-    plt.savefig(dest+name+'.png')
+    #dest = "D:/GitHubProjects/StudiaZUT/Systemy multimedialne/Lab8/"
+    #plt.savefig(dest+name+'.png')
+    plt.show()
 
 
 
-images=['zyrafa.jpg','dog.jpg','bugsbunny.jpg']
+images=['zyrafa.jpg']#,'dog.jpg','bugsbunny.jpg']
 dims = [(450,300),(300,200),(0,100)]
 
 for dim in dims:
