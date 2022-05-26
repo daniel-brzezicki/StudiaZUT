@@ -1,0 +1,233 @@
+<?php
+
+
+$config = Setup::createAnnotationMetadataConfiguration((__DIR__.'/src'));
+
+$con = [
+    'dbname'=>'bd46477',
+    'user'=>'bd46477',
+    'password'=>'failsfd7',
+    'host'=>'db.zut.edu.pl',
+    'driver'=>'pdo_mysql',
+    'charset'=>'utf8'
+];
+
+$entityMan=\Doctrine\ORM\EntityManager::create($conn,$config); 
+
+
+
+namespace bd46477\L7;
+use Doctrine\ORM\Mapping;
+
+/**
+ * Entity
+ */
+class Uczen{
+    /**
+     * @Id
+     * @Column(type="integer")
+     * @GeneratedValue
+     */
+    private $id;
+
+    /**
+     * @Column(type="string")
+     */
+    private $imie;
+    
+
+    /**
+     * @Column(type="string")
+     */
+    private $nazwisko;
+
+    /**
+     * @Column(type="string")
+     * @ManyToOne(targetEntity="Klasa")
+     */
+    private $klasa;
+
+    public function __construct(){
+        $this->klasa  =new ArrayCollection();
+    }
+
+
+
+
+}
+
+/**
+ * Entity
+ */
+class Nauczyciel{
+    /**
+     * @Id
+     * @Column(type="integer")
+     * @GeneratedValue
+     */
+    private $id;
+
+    /**
+     * @Column(type="string")
+     */
+    private $imie;
+    
+
+    /**
+     * @Column(type="string")
+     */
+    private $nazwisko;
+
+    /**
+     * @Column(type="string")
+     */
+    private $klasa;
+
+    /**
+     * @Column(type="string")
+     * @ManyToOne(targetEntity="Przedmiot")
+     */
+    private $przedmioty;
+
+
+}
+
+
+/**
+ * Entity
+ */
+class Przedmiot{
+    /**
+     * @Id
+     * @Column(type="integer")
+     * @GeneratedValue
+     */
+    private $id;
+
+    /**
+     * @Column(type="string")
+     */
+    private $nazwa;
+    
+
+    /**
+     * @Column(type="string")
+     */
+    private $klasa;
+
+    /**
+     * @Column(type="string")
+     * @ManyToOne(targetEntity="Nauczyciel")
+     */
+    private $nauczyciel;
+
+    /**
+     * @Column(type="string")
+     */
+    private $prowadzi;
+
+
+
+}
+
+
+/**
+ * Entity
+ */
+class Klasa{
+    /**
+     * @Id
+     * @Column(type="integer")
+     * @GeneratedValue
+     */
+    private $id;
+
+    /**
+     * @Column(type="string")
+     */
+    private $nazwa;
+    
+
+    /**
+     * @Column(type="string")
+     */
+    private $wychowawca;
+
+    /**
+     * @Column(type="string")
+     * @OneToMany(targetEntity="Klasa")
+     */
+    private $uczniowie;
+
+
+    public function __construct(){
+        $this->uczniowie = new ArrayCollection();
+    }
+
+
+
+}
+
+
+
+
+$uczen1= new bd46477\L7\Uczen();
+$uczen1->setImie("Mariusz");
+$uczen1->setNazwisko("Pudzianowski");
+$uczen1->setKlasa("1A");
+
+$wychowawca1 = new bd46477\L7\Nauczyciel();
+$wychowawca1->setImie("Iga");
+$wychowawca1->setNazwisko("Swiatek");
+$wychowawca1->setKlasa(klasa1a->getNazwa());
+
+
+$przedmiot1 = new bd46477\L7\Przedmiot();
+$przedmiot1->setNazwa("Informatyka");
+$przedmiot1->setNauczyciel(wychowawca1->getNazwa());
+$przedmiot1->setKlasa(klasa1a->getNazwa());
+
+
+#Dodanie klas
+$entityMan->persist($klasa1a);
+$entityMan->persist($klasa1b);
+$entityMan->persist($klasa2a);
+$entityMan->persist($klasa2b);
+
+#Dodanie uczniow
+$entityMan->persist($uczen1);
+$entityMan->persist($uczen2);
+$entityMan->persist($uczen3);
+$entityMan->persist($uczen4);
+$entityMan->persist($uczen5);
+$entityMan->persist($uczen6);
+$entityMan->persist($uczen7);
+$entityMan->persist($uczen8);
+$entityMan->persist($uczen9);
+$entityMan->persist($uczen10);
+$entityMan->persist($uczen11);
+$entityMan->persist($uczen12);
+
+
+#Dodanie wychowawcow
+$entityMan->persist($wychowawca1);
+$entityMan->persist($wychowawca2);
+$entityMan->persist($wychowawca3);
+
+
+#Dodanie przedmiotow
+$entityMan->persist($przedmiot1);
+$entityMan->persist($przedmiot2);
+$entityMan->persist($przedmiot3);
+$entityMan->persist($przedmiot4);
+$entityMan->persist($przedmiot5);
+$entityMan->persist($przedmiot6);
+$entityMan->persist($przedmiot7);
+$entityMan->persist($przedmiot8);
+
+$entityMan->flush();
+
+
+
+
+

@@ -92,14 +92,77 @@ def chromaDesubsample(data, params, sub=True):
     return result    
 
 
+def RLE(data):
+    d = data.copy()
+    d = d.flatten()
+
+    newData = []
+
+    newData.append(len(data.shape))
+    for i in range(len(data.shape)):
+        newData.append(data.shape[i])
+
+    counter=0
+
+    current = d[0]
+    for i in range(d.shape[0]):
+        if(d[i]==current):
+            counter+=1
+        else:
+            newData.append(counter)
+            newData.append(current)
+            current = d[i]
+            counter=1
+    
+    newData.append(counter)
+    newData.append(current)
+
+
+    return newData
+
+
+def decodeRLE(data):
+    newData=[]
+    counters=[]
+    values=[]
+
+    shape=[]
+    size = data[0]
+    data.pop(0)
+    for i in range(size):
+        shape.append(data[0])
+        data.pop(0)
+
+    for i in range(len(data)):
+        if(i%2==0):
+            counters.append(data[i])
+        else:
+            values.append(data[i])
+
+    value = 0
+    for i in counters:
+        for j in range(i):
+            newData.append(values[value])
+        value+=1
+
+
+    newData = np.array(newData).reshape(tuple(shape[i] for i in range(len(shape))))
+    return newData
 
 def compress(sourceIm,params,t1,t2,t3):
-    Y, Cr, Cb = cv2.split(img)
+    Y, Cr, Cb = cv2.split(sourceIm)
 
     data = DATA()
+    
     data.Y = compressHelper(Y,params,t1,False)
     data.Cr = compressHelper(Cr,params,t2)
     data.Cb= compressHelper(Cb,params,t3)
+
+
+    data.Y=RLE(data.Y)
+    data.Cb =RLE(data.Cb)
+    data.Cr=RLE(data.Cr)
+
 
     return data
 
@@ -115,7 +178,7 @@ def compressHelper(data, params, tab, chroma=True):
         for _x in range(0,cs_x,8):
             dct = dct2(cs[_y:_y+8,_x:_x+8])
             #quant=np.round(dct[_y:_y+8,_x:_x+8]//tab).astype(int)
-            quant=np.round(dct//tab).astype(int)
+            quant=(dct/tab).astype(int)#/tab
             result[idx:idx+64]=zigzag(quant)
             idx+=64
     return result
@@ -135,11 +198,15 @@ def initData(params,s, chroma):
 
 def decompress(data, params,t1,t2,t3):
 
-    Y=decompressHelper(data.Y,params,t1,False)
-    Cr=decompressHelper(data.Cr,params,t2)
-    Cb=decompressHelper(data.Cb,params,t3)
+    Y = decodeRLE(data.Y)
+    Cr = decodeRLE(data.Cr)
+    Cb = decodeRLE(data.Cb)
 
-    return np.dstack([Y,Cr,Cb]).astype(np.uint8)
+    Y=decompressHelper(Y,params,t1,False)
+    Cr=decompressHelper(Cr,params,t2)
+    Cb=decompressHelper(Cb,params,t3)
+
+    return  np.dstack([Y,Cr,Cb]).astype(np.uint8)
 
 
 
@@ -157,14 +224,14 @@ def decompressHelper(data,params,tab,chroma=True):
     result= chromaDesubsample(np.clip(result,0,255).astype(np.uint8),params,chroma)
     return result
 
-def createPlots(img,param, t1,t2,t3,name):
+def createPlots(imgRGB,param, t1,t2,t3,name):
     figure, sp = plt.subplots(4, 2)
     figure.set_size_inches(7, 13)
     figure.suptitle(name,fontsize=16)
-
+    img = cv2.cvtColor(imgRGB, cv2.COLOR_RGB2YCrCb).astype(int)
     #orig
     Y, Cr, Cb = np.clip(cv2.split(img), 0, 255)
-    sp[0,0].imshow(img)
+    sp[0,0].imshow(imgRGB)
     sp[1,0].imshow(Y, cmap=plt.cm.gray)
     sp[2,0].imshow(Cr, cmap=plt.cm.gray)
     sp[3,0].imshow(Cb, cmap=plt.cm.gray)
@@ -175,8 +242,10 @@ def createPlots(img,param, t1,t2,t3,name):
     decompressedIm = decompress(compressedy,param,t1,t2,t3)
 
     #decomp
-    decompressedY, decompressedCr, decompressedCb = np.clip(cv2.split(decompressedIm), 0, 255)
-    sp[0,1].imshow(decompressedIm)
+    decompressedImRGB= cv2.cvtColor(decompressedIm.astype(np.uint8), cv2.COLOR_YCrCb2RGB).astype(int)
+    decompressedY, decompressedCr, decompressedCb = np.clip(cv2.split(decompressedIm), 0, 255)#convertToYCbCrFromRGB(a)), 0, 255)
+
+    sp[0,1].imshow(decompressedImRGB)
     sp[1,1].imshow(decompressedY, cmap=plt.cm.gray)
     sp[2,1].imshow(decompressedCr, cmap=plt.cm.gray)
     sp[3,1].imshow(decompressedCb, cmap=plt.cm.gray)
@@ -184,7 +253,6 @@ def createPlots(img,param, t1,t2,t3,name):
     dest = "D:/GitHubProjects/StudiaZUT/Systemy multimedialne/Lab8/"
     plt.savefig(dest+name+'.png')
     #plt.show()
-
 
 
 images=['zyrafa.jpg','dog.jpg','bugsbunny.jpg']
