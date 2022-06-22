@@ -3,7 +3,23 @@
     <title>Pi Video Surveillance</title>
   </head>
   <body>
-    <h1>aaaa</h1>
+    <h1>Systemy multimedialne</h1>
     <img style="width: 400px; height:400px;" src="{{ url_for('video_feed') }}">
+    
+    <form id="fd_form" action="" method="post">
+      <div class="panel-body">
+        <span>Object addons</span><br/>
+        <input type ="submit" name="showIconInCorner" value="Show icon"><br/>
+        <input type ="submit" name="showDateTime" value="Show Date Time"><br/><br/>
+        <span>Image effects</span><br/>
+        <input type ="submit" name="pixelEffect" value="Pixel effect"><br/>
+        <input type ="submit" name="sepiaEffect" value="Sepia effect"><br/>
+        <input type ="submit" name="sharpenEffect" value="Sharpen effect"><br/>
+        <input type ="submit" name="pencilEffect" value="Pencil effect"><br/><br/>
+        <input type ="submit" name="clearEffects" value="Clear effects"><br/>
+
+      </div>
+    </form>
   </body>
+  
 </html>

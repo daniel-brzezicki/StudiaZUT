@@ -177,7 +177,6 @@ def compressHelper(data, params, tab, chroma=True):
     for _y in range(0,cs_y,8):
         for _x in range(0,cs_x,8):
             dct = dct2(cs[_y:_y+8,_x:_x+8])
-            #quant=np.round(dct[_y:_y+8,_x:_x+8]//tab).astype(int)
             quant=(dct/tab).astype(int)#/tab
             result[idx:idx+64]=zigzag(quant)
             idx+=64

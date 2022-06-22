@@ -1,11 +1,9 @@
-
-
-# import the necessary packages
-import SingleMotionDetector
+from sklearn.utils import resample
 from imutils.video import VideoStream
 from flask import Response
 from flask import Flask
 from flask import render_template
+from flask import request
 import threading
 import argparse
 import datetime
@@ -14,113 +12,149 @@ import time
 import cv2
 import numpy as np
 
-# initialize the output frame and a lock used to ensure thread-safe
-# exchanges of the output frames (useful when multiple browsers/tabs
-# are viewing the stream)
+
+time.sleep(2.0)
 outputFrame = None
 lock = threading.Lock()
-# initialize a flask object
-app = Flask(__name__)
-# initialize the video stream and allow the camera sensor to
-# warmup
-#vs = VideoStream(usePiCamera=1).start()
-cap = cv2.VideoCapture("original_clip.mp4")
-vs = VideoStream(src=0).start()#VideoStream(src=0).start()
-time.sleep(2.0)
+app = Flask(__name__,template_folder='templates')
+vs = VideoStream(0).start()#VideoStream(src=0).start()
+
+showIconInCorner=False
+showDateTime=False
+pixelEffect=False
+sepiaEffect=False
+sharpenEffect=False
+pencilEffect=False
+
+effects = [showIconInCorner,showDateTime,pixelEffect,sepiaEffect,sharpenEffect,pencilEffect]
+
+def clearEffects():
+	global showIconInCorner,showDateTime,pixelEffect,sepiaEffect,sharpenEffect,pencilEffect
+	showIconInCorner=False
+	showDateTime=False
+	pixelEffect=False
+	sepiaEffect=False
+	sharpenEffect=False
+	pencilEffect=False
+
+def changeValue(flag):
+	if flag:
+		flag=False
+	else:
+		flag=True
+	return flag
 
 
-@app.route("/")
+@app.route("/", methods=['GET','POST'])
 def index():
-	# return the rendered template
-	return render_template("index.html")
+	global vs,showIconInCorner,showDateTime,pixelEffect,sepiaEffect,sharpenEffect,pencilEffect
+
+	if(request.method=='GET'):
+		return render_template("index.html")
+	elif(request.method=='POST'):
+		if(request.form.get('showIconInCorner')):
+			showIconInCorner=changeValue(showIconInCorner)
+		if(request.form.get('showDateTime')):
+			showDateTime=changeValue(showDateTime)
+		if(request.form.get('pixelEffect')):
+			pixelEffect=changeValue(pixelEffect)
+		if(request.form.get('sepiaEffect')):
+			sepiaEffect=changeValue(sepiaEffect)
+		if(request.form.get('sharpenEffect')):
+			sharpenEffect= changeValue(sharpenEffect)
+		if(request.form.get('pencilEffect')):
+			pencilEffect= changeValue(pencilEffect)
+		if(request.form.get('clearEffects')):
+			clearEffects()
+
+		return render_template("index.html")
 
 def detect_motion(frameCount):
-	# grab global references to the video stream, output frame, and
-	# lock variables
-	global vs, outputFrame, lock
-	# initialize the motion detector and the total number of frames
-	# read thus far
-	md = SingleMotionDetector(accumWeight=0.1)
+	global vs, outputFrame, lock, showIconInCorner,showDateTime,pixelEffect,sepiaEffect,sharpenEffect,pencilEffect
 	total = 0
 
 	# loop over frames from the video stream
 	while True:
-		# read the next frame from the video stream, resize it,
-		# convert the frame to grayscale, and blur it
 		frame = vs.read()
 		frame = imutils.resize(frame, width=400)
-		gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-		gray = cv2.GaussianBlur(gray, (7, 7), 0)
-		# grab the current timestamp and draw it on the frame
-		timestamp = datetime.datetime.now()
-		cv2.putText(frame, timestamp.strftime(
-			"%A %d %B %Y %I:%M:%S%p"), (10, frame.shape[0] - 10),
+
+		frameToModify = frame.copy()
+
+		w,h= frame.shape[:2]
+
+		if(showIconInCorner):
+			logo = cv2.imread("icon.png")
+			size = 100
+			logo = cv2.resize(logo, (size, size))
+
+			img2gray = cv2.cvtColor(logo, cv2.COLOR_BGR2GRAY)
+			ret, mask = cv2.threshold(img2gray, 1, 255, cv2.THRESH_BINARY)
+
+			roi = frameToModify[-h+size:+size, -size-1:-1]
+
+			roi[np.where(mask)] = 0
+			roi += logo
+
+		if(showDateTime):
+			timestamp = datetime.datetime.now()
+			cv2.putText(frameToModify, timestamp.strftime(
+			"%A %d %B %Y %I:%M:%S%p"), (10, frameToModify.shape[0] - 10),
 			cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
 
-		# if the total number of frames has reached a sufficient
-		# number to construct a reasonable background model, then
-		# continue to process the frame
-		if total > frameCount:
-			# detect motion in the image
-			motion = md.detect(gray)
-			# check to see if motion was found in the frame
-			if motion is not None:
-				# unpack the tuple and draw the box surrounding the
-				# "motion area" on the output frame
-				(thresh, (minX, minY, maxX, maxY)) = motion
-				cv2.rectangle(frame, (minX, minY), (maxX, maxY),
-					(0, 0, 255), 2)
-		
-		# update the background model and increment the total number
-		# of frames read thus far
-		md.update(gray)
+		if(pixelEffect):
+			temp = cv2.resize(frameToModify, (16, 16), interpolation=cv2.INTER_LINEAR)
+			frameToModify = cv2.resize(temp, (frame.shape[:2]), interpolation=cv2.INTER_NEAREST)
+
+		if(sepiaEffect):
+			img_sepia = np.array(frameToModify, dtype=np.float64)
+			img_sepia = cv2.transform(img_sepia, np.matrix([[0.272, 0.534, 0.131],
+										[0.349, 0.686, 0.168],
+										[0.393, 0.769, 0.189]]))
+			img_sepia[np.where(img_sepia > 255)] = 255
+			frameToModify = np.array(img_sepia, dtype=np.uint8)
+			
+		if(sharpenEffect):
+			kernel = np.array([[-1, -1, -1], [-1, 9.5, -1], [-1, -1, -1]])
+			temp = cv2.filter2D(frameToModify, -1, kernel)
+			frameToModify=temp
+
+		if(pencilEffect):
+			sk_gray, sk_color = cv2.pencilSketch(frameToModify, sigma_s=60, sigma_r=0.07, shade_factor=0.1) 
+			frameToModify=sk_gray
+
+
+		frame = frameToModify
 		total += 1
-		# acquire the lock, set the output frame, and release the
-		# lock
 		with lock:
 			outputFrame = frame.copy()
 
 def generate():
-	# grab global references to the output frame and lock variables
 	global outputFrame, lock
-	# loop over frames from the output stream
 	while True:
-		# wait until the lock is acquired
 		with lock:
-			# check if the output frame is available, otherwise skip
-			# the iteration of the loop
 			if outputFrame is None:
 				continue
-			# encode the frame in JPEG format
 			(flag, encodedImage) = cv2.imencode(".jpg", outputFrame)
-			# ensure the frame was successfully encoded
 			if not flag:
 				continue
-		# yield the output frame in the byte format
 		yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + 
-			bytearray(np.linspace(1,16).reshape(8,2)) + b'\r\n')#encodedImage
+			bytearray(encodedImage) + b'\r\n')
 
 @app.route("/video_feed")
 def video_feed():
-	# return the response generated along with the specific media
-	# type (mime type)
 	return Response(generate(),
 		mimetype = "multipart/x-mixed-replace; boundary=frame")
 
 
-# check to see if this is the main thread of execution
 if __name__ == '__main__':
 
-	frame=32
+	frame=10
 	ip="127.0.0.1"
-	port="8000"
-	# start a thread that will perform motion detection
+	port="8002"
 	t = threading.Thread(target=detect_motion, args=(
 		frame,))
 	t.daemon = True
 	t.start()
-	# start the flask app
+	
 	app.run(host=ip, port=port, debug=True,
 		threaded=True, use_reloader=False)
-# release the video stream pointer
-vs.stop()
